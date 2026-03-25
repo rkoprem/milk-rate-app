@@ -1344,10 +1344,16 @@ function showPage2(p) {
 
 // ─── CLOUD SAVE ───────────────────────────────────────────────
 function saveChartsToCloud() {
-  if (isLocalMode || !db) return;
+  if (isLocalMode || !db) {
+    console.log('saveChartsToCloud: skipped (localMode or no db)', isLocalMode, db);
+    return;
+  }
   const data = {};
-  charts.forEach(c => { data[c.id] = c; });
-  db.ref('charts').set(data);
+  charts.forEach(c => { data[c.id] = { id: c.id, name: c.name, rates: c.rates || {} }; });
+  console.log('saveChartsToCloud: saving', JSON.stringify(data));
+  db.ref('charts').set(data)
+    .then(() => { console.log('Firebase save success'); showToast('☁️ Cloud-ல் சேமிக்கப்பட்டது!'); })
+    .catch(e => { console.error('Firebase save error', e); showToast('❌ Save error: ' + e.message); });
 }
 
 // ─── INIT ─────────────────────────────────────────────────────
