@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>பால் விலை நிர்வாகம்</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Thambi+2:wght@400;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --bg: #0F1923;
+  --bg2: #162030;
+  --bg3: #1E2D40;
+  --card: #1A2A3A;
+  --card2: #223040;
+  --teal: #00C9A7;
+  --teal2: #00A889;
+  --gold: #FFB830;
+  --gold2: #E8A010;
+  --orange: #FF6B35;
+  --blue: #4A9EFF;
+  --red: #FF4D6A;
+  --green: #22D65A;
+  --border: rgba(255,255,255,0.08);
+  --text: #E8F0F8;
+  --text2: #8AA4BF;
+  --text3: #4A6A85;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans Tamil', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* TABS */
+.top-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+
+.app-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.brand-name {
+  font-family: 'Baloo Thambi 2', cursive;
+  font-size: 18px; font-weight: 800;
+  background: linear-gradient(90deg, var(--teal), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.tabs {
+  display: flex; gap: 4px;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--text2);
+  transition: all 0.2s;
+  border: none; background: none;
+  font-family: 'Noto Sans Tamil', sans-serif;
+}
+
+.tab.active {
+  background: var(--teal);
+  color: #0F1923;
+}
+
+/* PAGES */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+}
+
+.card-title {
+  font-family: 'Baloo Thambi 2', cursive;
+  font-size: 14px; font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* CHART SELECTOR */
+.chart-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px;
+}
+
+.chart-chip {
+  padding: 8px 14px;
+  border-radius: 24px;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  color: var(--text2);
+  background: var(--bg3);
+  transition: all 0.18s;
+  font-family: 'Noto Sans Tamil', sans-serif;
+}
+
+.chart-chip.selected {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: rgba(0,201,167,0.12);
+}
+
+/* INPUTS */
+.input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+
+.input-group { flex: 1; }
+.input-group label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px;
+  display: block; margin-bottom: 6px;
+}
+
+.inp {
+  width: 100%;
+  background: var(--bg3);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 18px; font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: 'Baloo Thambi 2', cursive;
+}
+
+.inp:focus { border-color: var(--teal); }
+.inp.small { font-size: 14px; text-align: left; }
+
+/* RESULT BOX */
+.result-hero {
+  background: linear-gradient(135deg, #0A2535, #0D2040);
+  border: 1px solid rgba(0,201,167,0.25);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 14px;
+  position: relative; overflow: hidden;
+}
+
+.result-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 70% 30%, rgba(0,201,167,0.08), transparent 60%);
+}
+
+.result-lbl { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+.result-val {
+  font-family: 'Baloo Thambi 2', cursive;
+  font-size: 56px; font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+  transition: all 0.3s;
+}
+
+.result-sub { font-size: 13px; color: var(--text2); margin-top: 6px; }
+
+.result-pills {
+  display: flex; justify-content: center; gap: 10px;
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.result-pill {
+  background: var(--bg3);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+
+.result-pill span { color: var(--teal); }
+
+/* TOTAL ROW */
+.total-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3);
+  border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.total-row label { font-size: 13px; font-weight: 700; color: var(--text2); white-space: nowrap; }
+
+.total-val {
+  flex: 1; text-align: right;
+  font-family: 'Baloo Thambi 2', cursive;
+  font-size: 22px; font-weight: 800; color: var(--orange);
+}
+
+/* CHART MANAGEMENT PAGE */
+.chart-list-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3);
+  border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.18s;
+}
+
+.chart-list-item:hover { border-color: var(--teal); }
+.chart-list-item.editing { border-color: var(--gold); }
+
+.cli-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cli-name { flex: 1; font-weight: 700; font-size: 15px; }
+.cli-count { font-size: 12px; color: var(--text3); font-weight: 600; }
+.cli-actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  width: 30px; height: 30px;
+  border-radius: 8px; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px;
+  transition: background 0.15s;
+}
+
+.btn-edit { background: rgba(74,158,255,0.15); color: var(--blue); }
+.btn-edit:hover { background: rgba(74,158,255,0.3); }
+.btn-del { background: rgba(255,77,106,0.15); color: var(--red); }
+.btn-del:hover { background: rgba(255,77,106,0.3); }
+.btn-copy { background: rgba(255,184,48,0.15); color: var(--gold); }
+.btn-copy:hover { background: rgba(255,184,48,0.3); }
+
+/* ADD CHART FORM */
+.add-form {
+  background: rgba(0,201,167,0.06);
+  border: 1.5px dashed rgba(0,201,167,0.3);
+  border-radius: 14px; padding: 14px;
+  margin-top: 10px;
+}
+
+.add-form-title { font-size: 13px; font-weight: 700; color: var(--teal); margin-bottom: 12px; }
+
+.btn {
+  border: none; border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'Noto Sans Tamil', sans-serif;
+}
+
+.btn-primary { background: var(--teal); color: #0F1923; }
+.btn-primary:hover { background: var(--teal2); transform: scale(1.02); }
+.btn-gold { background: var(--gold); color: #0F1923; }
+.btn-gold:hover { background: var(--gold2); }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn-full { width: 100%; text-align: center; margin-top: 8px; }
+
+/* RATE TABLE EDITOR */
+.rate-editor-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+}
+
+.re-title { font-size: 15px; font-weight: 700; color: var(--gold); }
+
+.upload-area {
+  background: var(--bg3);
+  border: 2px dashed rgba(74,158,255,0.4);
+  border-radius: 12px; padding: 20px;
+  text-align: center; cursor: pointer;
+  transition: border-color 0.2s;
+  margin-bottom: 14px;
+}
+
+.upload-area:hover { border-color: var(--blue); }
+.upload-area input { display: none; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; font-weight: 600; color: var(--text2); }
+.upload-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* RATE TABLE DISPLAY */
+.rate-table-wrap { overflow-x: auto; margin-top: 12px; }
+
+table.rtable {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 12px;
+}
+
+table.rtable th {
+  background: var(--teal);
+  color: #0F1923;
+  padding: 8px 10px;
+  text-align: center;
+  font-weight: 800;
+  white-space: nowrap;
+  position: sticky; top: 0;
+}
+
+table.rtable td {
+  padding: 7px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--text);
+  min-width: 56px;
+}
+
+table.rtable tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+table.rtable td.fat-col {
+  font-weight: 800; color: var(--teal);
+  background: rgba(0,201,167,0.06) !important;
+  position: sticky; left: 0;
+}
+
+table.rtable td.highlight {
+  background: rgba(255,184,48,0.22) !important;
+  color: var(--gold); font-weight: 800;
+  font-size: 13px;
+}
+
+table.rtable td.editable-cell {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+table.rtable td.editable-cell:hover {
+  background: rgba(0,201,167,0.12) !important;
+}
+
+table.rtable input.cell-inp {
+  width: 52px; background: var(--bg);
+  border: 1.5px solid var(--teal);
+  border-radius: 6px; padding: 4px 6px;
+  color: var(--gold); font-weight: 800;
+  font-size: 12px; text-align: center;
+  outline: none;
+  font-family: 'Baloo Thambi 2', cursive;
+}
+
+/* VALIDATION */
+.err-msg {
+  background: rgba(255,77,106,0.12);
+  border: 1px solid rgba(255,77,106,0.3);
+  color: var(--red);
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 12px; font-weight: 600;
+  margin-bottom: 10px; display: none;
+}
+
+.err-msg.show { display: block; }
+
+/* LEGEND */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); font-weight: 600; }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--text3); border-radius: 4px; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--teal); color: #0F1923;
+  padding: 10px 24px; border-radius: 24px;
+  font-weight: 700; font-size: 14px;
+  transition: transform 0.3s; z-index: 999;
+  white-space: nowrap;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.empty-state {
+  text-align: center; padding: 30px 20px;
+  color: var(--text3); font-size: 14px; font-weight: 600;
+}
+
+.empty-state .es-icon { font-size: 36px; margin-bottom: 10px; }
+
+.snf-header { background: var(--bg3) !important; color: var(--blue) !important; }
+
+/* CSV FORMAT HINT */
+.csv-hint {
+  background: rgba(74,158,255,0.08);
+  border: 1px solid rgba(74,158,255,0.2);
+  border-radius: 10px; padding: 12px;
+  font-size: 12px; color: var(--text2);
+  margin-bottom: 12px; font-family: monospace;
+  line-height: 1.8;
+}
+
+/* EDITOR TABS */
+.editor-tab {
+  flex: 1; padding: 10px 8px;
+  border-radius: 12px; border: 2px solid var(--border);
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; background: var(--bg3);
+  color: var(--text2); transition: all 0.18s;
+  font-family: 'Noto Sans Tamil', sans-serif;
+  text-align: center;
+}
+.editor-tab.active {
+  background: var(--teal); color: #0F1923;
+  border-color: var(--teal);
+}
+
+/* RECENT RATES */
+.recent-rate-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+  border: 1px solid var(--border);
+}
+.rri-vals { flex: 1; font-size: 13px; font-weight: 700; color: var(--text); }
+.rri-vals span { color: var(--teal); }
+.rri-rate { font-family: 'Baloo Thambi 2', cursive; font-size: 16px; font-weight: 800; color: var(--gold); }
+.rri-del { background: rgba(255,77,106,0.15); color: var(--red); border: none; border-radius: 7px; width: 28px; height: 28px; cursor: pointer; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- FIREBASE SETUP MODAL -->
+<div id="fbModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--border);">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:36px;margin-bottom:8px;">🥛</div>
+      <div style="font-family:'Baloo Thambi 2',cursive;font-size:20px;font-weight:800;background:linear-gradient(90deg,var(--teal),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">பால் விலை நிர்வாகம்</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">Cloud Sync Setup</div>
+    </div>
+
+    <!-- Step 1: Firebase Config -->
+    <div id="fbStep1">
+      <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:12px;">🔥 Firebase Database URL</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;">
+        Firebase console → Project → Realtime Database → URL copy பண்ணவும்<br>
+        <span style="color:var(--text3);">எ.கா: https://xxx-default-rtdb.firebaseio.com</span>
+      </div>
+      <input type="text" id="fbUrl" class="inp small" placeholder="https://your-project-default-rtdb.firebaseio.com" style="margin-bottom:10px;font-size:13px;">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px;margin-top:4px;">🔑 Admin Password</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Rate மாற்ற Admin password வேண்டும். Users read-only.</div>
+      <input type="password" id="fbAdminPass" class="inp small" placeholder="Admin password set பண்ணவும்" style="margin-bottom:10px;font-size:13px;">
+      <button class="btn btn-primary btn-full" onclick="initFirebase()">🚀 Connect & Start</button>
+      <div style="text-align:center;margin-top:10px;">
+        <button onclick="useLocalMode()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:'Noto Sans Tamil',sans-serif;">📱 Local mode (cloud இல்லாமல்)</button>
+      </div>
+    </div>
+
+    <div id="fbConnecting" style="display:none;text-align:center;padding:20px 0;">
+      <div style="font-size:28px;margin-bottom:10px;">🔄</div>
+      <div style="font-weight:700;color:var(--teal);">Connecting...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN MODAL -->
+<div id="adminModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:360px;border:1px solid var(--border);">
+    <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px;">🔑 Admin Login</div>
+    <input type="password" id="adminPassInp" class="inp small" placeholder="Admin password உள்ளிடவும்" style="margin-bottom:10px;font-size:14px;">
+    <div id="adminErr" style="color:var(--red);font-size:12px;font-weight:700;margin-bottom:8px;display:none;">⚠️ தவறான password!</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="verifyAdmin()">உள்ளே செல்</button>
+      <button class="btn" style="background:var(--bg3);color:var(--text2);" onclick="closeAdminModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC STATUS BAR -->
+<div id="syncBar" style="display:none;background:var(--bg2);padding:4px 16px;font-size:11px;font-weight:700;text-align:center;border-bottom:1px solid var(--border);">
+  <span id="syncStatus">⚡ Connecting...</span>
+  <span id="adminBadge" style="display:none;margin-left:10px;background:var(--gold);color:#0F1923;padding:2px 8px;border-radius:10px;font-size:10px;">👑 ADMIN</span>
+  <button id="logoutBtn" onclick="adminLogout()" style="display:none;margin-left:8px;background:none;border:none;color:var(--red);font-size:11px;font-weight:700;cursor:pointer;">Logout</button>
+</div>
+
+<div class="top-bar">
+  <div class="app-brand">
+    <div class="brand-icon">🥛</div>
+    <div>
+      <div class="brand-name">பால் விலை நிர்வாகம்</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('calc')">🔢 கணக்கிடு</button>
+    <button class="tab" onclick="showPage('charts')">📋 Charts</button>
+    <button class="tab" id="editorTab" onclick="requireAdmin('editor')">✏️ Rate Edit</button>
+  </div>
+</div>
+
+<!-- PAGE 1: CALCULATOR -->
+<div class="page active" id="page-calc">
+
+  <div class="card">
+    <div class="card-title">📌 Rate Chart தேர்வு செய்யவும்</div>
+    <div class="chart-chips" id="calcChips">
+      <div class="empty-state" style="padding:8px;font-size:13px;">Charts page-ல் chart சேர்க்கவும்</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔢 FAT & SNF உள்ளிடவும்</div>
+    <div id="errMsg" class="err-msg"></div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>🧈 FAT %</label>
+        <input type="number" class="inp" id="fatInp" placeholder="4.0" min="2.5" max="12.0" step="0.1" oninput="calculate()">
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;font-weight:600;">2.5 – 12.0</div>
+      </div>
+      <div class="input-group">
+        <label>🧪 SNF %</label>
+        <input type="number" class="inp" id="snfInp" placeholder="8.0" min="7.0" max="10.0" step="0.1" oninput="calculate()">
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;font-weight:600;">7.0 – 10.0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-hero">
+    <div class="result-lbl">ஒரு லிட்டர் விலை</div>
+    <div class="result-val" id="resultVal">—</div>
+    <div class="result-sub" id="resultSub">Chart & மதிப்புகள் தேர்வு செய்யவும்</div>
+    <div class="result-pills" id="resultPills" style="display:none;">
+      <div class="result-pill">FAT: <span id="rFat">—</span></div>
+      <div class="result-pill">SNF: <span id="rSnf">—</span></div>
+      <div class="result-pill">TS: <span id="rTs" style="color:var(--gold);">—</span></div>
+      <div class="result-pill">Chart: <span id="rChart">—</span></div>
+    </div>
+  </div>
+
+  <!-- TS Rate display -->
+  <div id="tsRateBox" style="display:none;background:linear-gradient(135deg,#1a2a1a,#1a2510);border:1px solid rgba(34,214,90,0.3);border-radius:16px;padding:16px 20px;text-align:center;margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">TS விலை (ஒரு லிட்டர்)</div>
+    <div id="tsRateVal" style="font-family:'Baloo Thambi 2',cursive;font-size:40px;font-weight:800;color:var(--green);line-height:1;">—</div>
+    <div id="tsRateSub" style="font-size:12px;color:var(--text2);margin-top:4px;"></div>
+  </div>
+
+  <div class="total-row">
+    <label>🪣 லிட்டர்:</label>
+    <input type="number" class="inp" id="literInp" placeholder="10" min="0.1" step="0.1"
+      style="width:90px;font-size:16px;padding:8px;" oninput="calcTotal()">
+    <div>
+      <div style="font-size:10px;color:var(--text3);text-align:right;font-weight:600;">மொத்தம்</div>
+      <div class="total-val" id="totalAmt">₹ —</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PAGE 2: CHART MANAGEMENT -->
+<div class="page" id="page-charts">
+
+  <div class="card">
+    <div class="card-title">📋 என் Rate Charts (<span id="chartCount">0</span>)</div>
+    <div id="chartListUI"></div>
+    <div class="add-form">
+      <div class="add-form-title">➕ புதிய Chart சேர்க்க</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Chart பெயர்</label>
+          <input type="text" class="inp small" id="newName" placeholder="எ.கா: K Rate" maxlength="25">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="addChart()">Chart சேர்க்க & Rate Table தயார் செய்</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- PAGE 3: RATE EDITOR -->
+<div class="page" id="page-editor">
+
+  <!-- Chart Selector -->
+  <div class="card">
+    <div class="card-title">📋 Chart தேர்வு செய்யவும்</div>
+    <div class="chart-chips" id="editorChips"></div>
+  </div>
+
+  <!-- Tab switcher: Manual / CSV -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;" id="editorTabBar" style="display:none;">
+    <button class="editor-tab active" id="etab-manual" onclick="switchEditorTab('manual')">✏️ Manual Entry</button>
+    <button class="editor-tab" id="etab-csv" onclick="switchEditorTab('csv')">📂 CSV Upload</button>
+    <button class="editor-tab" id="etab-table" onclick="switchEditorTab('table')">📊 Table View</button>
+  </div>
+
+  <!-- MANUAL ENTRY PANEL -->
+  <div class="card" id="panel-manual">
+    <div class="card-title">✏️ FAT & SNF Rate சேர்க்கவும்</div>
+    <div id="manualErr" class="err-msg"></div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>🧈 FAT %</label>
+        <input type="number" class="inp" id="mFat" placeholder="4.0" min="2.5" max="12.0" step="0.1">
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:3px;font-weight:600;">2.5 – 12.0</div>
+      </div>
+      <div class="input-group">
+        <label>🧪 SNF %</label>
+        <input type="number" class="inp" id="mSnf" placeholder="8.0" min="7.0" max="10.0" step="0.1">
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:3px;font-weight:600;">7.0 – 10.0</div>
+      </div>
+      <div class="input-group">
+        <label>💰 Rate ₹</label>
+        <input type="number" class="inp" id="mRate" placeholder="28.50" min="0" step="0.01">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addManualRate()">➕ Rate சேர்க்கவும்</button>
+
+    <!-- Recently added list -->
+    <div id="recentRatesList" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- CSV UPLOAD PANEL -->
+  <div class="card" id="panel-csv" style="display:none;">
+    <div class="card-title">📂 CSV Upload</div>
+    <div class="csv-hint">
+      <b>CSV format (header optional):</b><br>
+      fat,snf,rate<br>
+      4.0,8.0,28.50<br>
+      4.1,8.0,29.00<br>
+      4.0,8.1,28.80<br>
+      ...
+    </div>
+    <label class="upload-area" id="uploadArea">
+      <input type="file" id="csvFile" accept=".csv,.txt" onchange="handleCSV(event)">
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">CSV file தேர்வு செய்யவும் (click)</div>
+      <div class="upload-hint">fat, snf, rate — 3 columns வேண்டும்</div>
+    </label>
+    <div id="csvResult" style="display:none;background:rgba(34,214,90,0.1);border:1px solid rgba(34,214,90,0.3);border-radius:10px;padding:12px;font-size:13px;font-weight:700;color:var(--green);margin-top:10px;"></div>
+  </div>
+
+  <!-- TABLE VIEW PANEL -->
+  <div class="card" id="panel-table" style="display:none;">
+    <div class="card-title">📊 Rate Table</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;" id="editorActions">
+      <button class="btn btn-primary btn-sm" onclick="saveRates()">💾 Save</button>
+      <button class="btn btn-sm" style="background:rgba(255,77,106,0.15);color:var(--red);" onclick="clearRates()">🗑 Clear All</button>
+    </div>
+    <div id="editorTableWrap">
+      <div class="empty-state"><div class="es-icon">👆</div>மேலே Chart தேர்வு செய்யவும்</div>
+    </div>
+    <div class="legend" style="margin-top:10px;">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(0,201,167,0.4)"></div> FAT</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(74,158,255,0.3)"></div> SNF</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,184,48,0.4)"></div> Highlighted</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA STORE ───────────────────────────────────────────────
+const FAT_VALS = [];
+for (let f = 2.5; f <= 12.0; f = Math.round((f + 0.1) * 10) / 10) FAT_VALS.push(+f.toFixed(1));
+const SNF_VALS = [];
+for (let s = 7.0; s <= 10.0; s = Math.round((s + 0.1) * 10) / 10) SNF_VALS.push(+s.toFixed(1));
+
+const COLORS = ['#00C9A7','#FF6B35','#4A9EFF','#FFB830','#FF4D6A','#22D65A','#C084FC','#FB7185'];
+
+let charts = [];       // [{id, name, rates: { "4.0_8.0": 28.50, ... }}]
+let selectedCalcId = null;
+let selectedEditorId = null;
+let editingCell = null;
+let nextId = 1;
+let recentRates = [];  // recent manual entries
+
+function getChart(id) { return charts.find(c => c.id === id); }
+function getColor(i) { return COLORS[i % COLORS.length]; }
+
+// ─── PAGE NAVIGATION ──────────────────────────────────────────
+function showPage(p) {
+  showPage2(p);
+}
+
+// ─── CHART MANAGEMENT ─────────────────────────────────────────
+function addChart() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { showToast('Chart பெயர் உள்ளிடவும்!'); return; }
+  if (charts.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+    showToast('இந்த பெயர் already இருக்கு!'); return;
+  }
+  const chart = { id: nextId++, name, rates: {} };
+  charts.push(chart);
+  document.getElementById('newName').value = '';
+  renderAll();
+  saveChartsToCloud();
+  showToast('✅ ' + name + ' சேர்க்கப்பட்டது!');
+  // Auto switch to editor
+  selectedEditorId = chart.id;
+  setTimeout(() => {
+    document.querySelectorAll('.tab')[2].click();
+  }, 500);
+}
+
+function deleteChart(id) {
+  if (!confirm('இந்த chart நீக்கவா?')) return;
+  charts = charts.filter(c => c.id !== id);
+  if (selectedCalcId === id) selectedCalcId = null;
+  if (selectedEditorId === id) selectedEditorId = null;
+  renderAll();
+  saveChartsToCloud();
+  showToast('நீக்கப்பட்டது');
+}
+
+function copyChart(id) {
+  const orig = getChart(id);
+  const copy = { id: nextId++, name: orig.name + ' (copy)', rates: { ...orig.rates } };
+  charts.push(copy);
+  renderAll();
+  showToast('📋 Copy செய்யப்பட்டது!');
+}
+
+function renderAll() {
+  renderChartList();
+  renderCalcChips();
+  renderEditorChips();
+  document.getElementById('chartCount').textContent = charts.length;
+}
+
+function renderChartList() {
+  const el = document.getElementById('chartListUI');
+  if (charts.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>Chart இல்லை. கீழே சேர்க்கவும்.</div>';
+    return;
+  }
+  el.innerHTML = charts.map((c, i) => {
+    const filled = Object.keys(c.rates).length;
+    return `
+    <div class="chart-list-item">
+      <div class="cli-dot" style="background:${getColor(i)}"></div>
+      <div class="cli-name">${c.name}</div>
+      <div class="cli-count">${filled} rates</div>
+      <div class="cli-actions">
+        <button class="icon-btn btn-edit" onclick="editChart(${c.id})" title="Edit rates">✏️</button>
+        <button class="icon-btn btn-copy" onclick="copyChart(${c.id})" title="Copy">📋</button>
+        <button class="icon-btn btn-del" onclick="deleteChart(${c.id})" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editChart(id) {
+  selectedEditorId = id;
+  recentRates = [];
+  document.querySelectorAll('.tab')[2].click();
+  renderEditorChips();
+  renderEditorTable();
+  renderRecentRates();
+  const tabBar = document.getElementById('editorTabBar');
+  if (tabBar) tabBar.style.display = 'flex';
+}
+
+// ─── CALC CHIPS ───────────────────────────────────────────────
+function renderCalcChips() {
+  const el = document.getElementById('calcChips');
+  if (charts.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:4px;">Charts page-ல் chart சேர்க்கவும்</div>';
+    return;
+  }
+  el.innerHTML = charts.map((c, i) => `
+    <div class="chart-chip ${c.id === selectedCalcId ? 'selected' : ''}"
+      style="${c.id === selectedCalcId ? `border-color:${getColor(i)};color:${getColor(i)};background:${getColor(i)}22;` : ''}"
+      onclick="selectCalcChart(${c.id}, ${i})">${c.name}</div>
+  `).join('');
+}
+
+function selectCalcChart(id, idx) {
+  selectedCalcId = (selectedCalcId === id) ? null : id;
+  renderCalcChips();
+  calculate();
+}
+
+// ─── EDITOR CHIPS ─────────────────────────────────────────────
+function renderEditorChips() {
+  const el = document.getElementById('editorChips');
+  if (charts.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text3);">Charts page-ல் chart சேர்க்கவும்</div>';
+    return;
+  }
+  el.innerHTML = charts.map((c, i) => `
+    <div class="chart-chip ${c.id === selectedEditorId ? 'selected' : ''}"
+      style="${c.id === selectedEditorId ? `border-color:${getColor(i)};color:${getColor(i)};background:${getColor(i)}22;` : ''}"
+      onclick="selectEditorChart(${c.id})">${c.name}</div>
+  `).join('');
+  if (selectedEditorId) renderEditorTable();
+}
+
+function selectEditorChart(id) {
+  selectedEditorId = id;
+  renderEditorChips();
+  renderEditorTable();
+  renderRecentRates();
+  // Show tab bar
+  const tabBar = document.getElementById('editorTabBar');
+  if (tabBar) tabBar.style.display = 'flex';
+}
+
+// ─── EDITOR TAB SWITCHING ─────────────────────────────────────
+function switchEditorTab(tab) {
+  ['manual','csv','table'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('etab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'table') renderEditorTable();
+}
+
+// ─── MANUAL RATE ENTRY ────────────────────────────────────────
+function addManualRate() {
+  const errEl = document.getElementById('manualErr');
+  errEl.classList.remove('show');
+
+  if (!selectedEditorId) {
+    errEl.textContent = '⚠️ முதலில் Chart தேர்வு செய்யவும்!';
+    errEl.classList.add('show'); return;
+  }
+  const fat = parseFloat(document.getElementById('mFat').value);
+  const snf = parseFloat(document.getElementById('mSnf').value);
+  const rate = parseFloat(document.getElementById('mRate').value);
+
+  if (isNaN(fat) || isNaN(snf) || isNaN(rate)) {
+    errEl.textContent = '⚠️ FAT, SNF மற்றும் Rate மூன்றும் உள்ளிடவும்!';
+    errEl.classList.add('show'); return;
+  }
+  if (fat < 2.5 || fat > 12.0) {
+    errEl.textContent = '⚠️ FAT: 2.5 – 12.0 இடையே இருக்க வேண்டும்';
+    errEl.classList.add('show'); return;
+  }
+  if (snf < 7.0 || snf > 10.0) {
+    errEl.textContent = '⚠️ SNF: 7.0 – 10.0 இடையே இருக்க வேண்டும்';
+    errEl.classList.add('show'); return;
+  }
+  if (rate <= 0) {
+    errEl.textContent = '⚠️ Rate 0-ஐ விட அதிகமாக இருக்க வேண்டும்';
+    errEl.classList.add('show'); return;
+  }
+
+  const chart = getChart(selectedEditorId);
+  const key = `${fat.toFixed(1)}_${snf.toFixed(1)}`;
+  chart.rates[key] = rate;
+
+  // Add to recent list
+  recentRates.unshift({ fat: fat.toFixed(1), snf: snf.toFixed(1), rate, key });
+  if (recentRates.length > 10) recentRates.pop();
+
+  renderRecentRates();
+  renderChartList();
+  saveChartsToCloud();
+  calculate();
+  showToast(`✅ FAT ${fat.toFixed(1)} | SNF ${snf.toFixed(1)} → ₹${rate.toFixed(2)}`);
+
+  // Clear rate input, keep fat/snf for quick entry
+  document.getElementById('mRate').value = '';
+  document.getElementById('mRate').focus();
+}
+
+function renderRecentRates() {
+  const el = document.getElementById('recentRatesList');
+  if (!el) return;
+  if (recentRates.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">
+      சமீபத்தில் சேர்த்தவை
+    </div>
+    ${recentRates.map((r, i) => `
+      <div class="recent-rate-item">
+        <div class="rri-vals">FAT <span>${r.fat}</span> | SNF <span>${r.snf}</span></div>
+        <div class="rri-rate">₹${r.rate.toFixed(2)}</div>
+        <button class="rri-del" onclick="deleteRecentRate(${i})">✕</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+function deleteRecentRate(i) {
+  const r = recentRates[i];
+  const chart = getChart(selectedEditorId);
+  if (chart && r) delete chart.rates[r.key];
+  recentRates.splice(i, 1);
+  renderRecentRates();
+  renderChartList();
+  saveChartsToCloud();
+  calculate();
+  showToast('🗑 நீக்கப்பட்டது');
+}
+
+// ─── EDITOR TABLE ─────────────────────────────────────────────
+function renderEditorTable() {
+  const wrap = document.getElementById('editorTableWrap');
+  const actions = document.getElementById('editorActions');
+  if (!selectedEditorId) {
+    wrap.innerHTML = '<div class="empty-state"><div class="es-icon">👆</div>Chart தேர்வு செய்யவும்</div>';
+    actions.style.display = 'none';
+    return;
+  }
+  actions.style.display = 'flex';
+  const chart = getChart(selectedEditorId);
+  if (!chart) {
+    selectedEditorId = null;
+    wrap.innerHTML = '<div class="empty-state"><div class="es-icon">👆</div>Chart தேர்வு செய்யவும்</div>';
+    actions.style.display = 'none';
+    return;
+  }
+  const fatInpVal = parseFloat(document.getElementById('fatInp').value);
+  const snfInpVal = parseFloat(document.getElementById('snfInp').value);
+
+  let html = '<div class="rate-table-wrap"><table class="rtable"><thead><tr>';
+  html += '<th style="background:var(--bg3);color:var(--text2);">FAT ↓ / SNF →</th>';
+  SNF_VALS.forEach(s => html += `<th class="snf-header">${s}</th>`);
+  html += '</tr></thead><tbody>';
+
+  FAT_VALS.forEach(f => {
+    html += '<tr>';
+    html += `<td class="fat-col">${f.toFixed(1)}</td>`;
+    SNF_VALS.forEach(s => {
+      const key = `${f.toFixed(1)}_${s.toFixed(1)}`;
+      const val = chart.rates[key];
+      const isHL = !isNaN(fatInpVal) && !isNaN(snfInpVal) &&
+        Math.abs(f - fatInpVal) < 0.26 && Math.abs(s - snfInpVal) < 0.26;
+      const display = val !== undefined ? val.toFixed(2) : '—';
+      html += `<td class="editable-cell ${isHL ? 'highlight' : ''}"
+        onclick="startEdit(this,'${key}')"
+        data-key="${key}" data-val="${val !== undefined ? val : ''}">
+        ${display}
+      </td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
+
+function startEdit(cell, key) {
+  if (editingCell) finishEdit();
+  editingCell = cell;
+  const chart = getChart(selectedEditorId);
+  if (!chart) return;
+  const cur = chart.rates[key] !== undefined ? chart.rates[key] : '';
+  cell.innerHTML = `<input class="cell-inp" type="number" value="${cur}" min="0" max="9999" step="0.01"
+    onblur="finishEdit()" onkeydown="cellKeydown(event)" autofocus>`;
+  cell.querySelector('input').focus();
+  cell.querySelector('input').select();
+}
+
+function finishEdit() {
+  if (!editingCell) return;
+  const inp = editingCell.querySelector('input');
+  if (!inp) { editingCell = null; return; }
+  const key = editingCell.dataset.key;
+  const val = parseFloat(inp.value);
+  const chart = getChart(selectedEditorId);
+  if (!chart) { editingCell = null; return; }
+  if (!isNaN(val) && val > 0) {
+    chart.rates[key] = val;
+    editingCell.innerHTML = val.toFixed(2);
+  } else {
+    delete chart.rates[key];
+    editingCell.innerHTML = '—';
+  }
+  editingCell = null;
+  renderChartList();
+  calculate();
+}
+
+function cellKeydown(e) {
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    finishEdit();
+    // Move to next cell
+    if (editingCell === null) {
+      const cells = Array.from(document.querySelectorAll('.editable-cell'));
+      const cur = document.activeElement?.closest('td');
+      if (cur) {
+        const idx = cells.indexOf(cur);
+        if (idx >= 0 && idx < cells.length - 1) {
+          cells[idx + 1].click();
+        }
+      }
+    }
+  }
+  if (e.key === 'Escape') finishEdit();
+}
+
+function saveRates() {
+  finishEdit();
+  const chart = getChart(selectedEditorId);
+  if (!chart) return;
+  const count = Object.keys(chart.rates).length;
+  saveChartsToCloud();
+  showToast(`💾 ${chart.name} — ${count} rates saved!`);
+  renderChartList();
+}
+
+function clearRates() {
+  if (!confirm('இந்த chart-ன் எல்லா rates-ம் clear ஆகும்?')) return;
+  const chart = getChart(selectedEditorId);
+  if (!chart) return;
+  chart.rates = {};
+  recentRates = [];
+  renderEditorTable();
+  renderChartList();
+  saveChartsToCloud();
+  showToast('🗑 Cleared');
+}
+
+function fillSampleRates() {
+  const chart = getChart(selectedEditorId);
+  if (!chart) return;
+  // Generate sample rates using fat/snf formula
+  FAT_VALS.forEach(f => {
+    SNF_VALS.forEach(s => {
+      const key = `${f.toFixed(1)}_${s.toFixed(1)}`;
+      // Simple formula: base 20 + fat*3 + snf*1
+      const rate = +(20 + f * 3 + s * 1).toFixed(2);
+      chart.rates[key] = rate;
+    });
+  });
+  renderEditorTable();
+  renderChartList();
+  showToast('✨ Sample rates நிரப்பப்பட்டது!');
+}
+
+// ─── CSV UPLOAD ───────────────────────────────────────────────
+function handleCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!selectedEditorId) { showToast('முதலில் Chart தேர்வு செய்யவும்!'); return; }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    parseCSV(text);
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const chart = getChart(selectedEditorId);
+  if (!chart) return;
+  let count = 0;
+  let errors = 0;
+
+  lines.forEach((line, i) => {
+    line = line.replace(/\r/g, '').trim();
+    if (!line) return;
+    if (i === 0 && (line.toLowerCase().includes('fat') || line.toLowerCase().includes('snf'))) return;
+    // Support comma, semicolon, tab delimiters
+    const parts = line.split(/[,;\t]/).map(p => p.trim());
+    if (parts.length < 3) return;
+    const fat = parseFloat(parts[0]);
+    const snf = parseFloat(parts[1]);
+    const rate = parseFloat(parts[2]);
+    if (isNaN(fat) || isNaN(snf) || isNaN(rate)) { errors++; return; }
+    if (fat < 2.5 || fat > 12.0 || snf < 7.0 || snf > 10.0) { errors++; return; }
+    const key = `${fat.toFixed(1)}_${snf.toFixed(1)}`;
+    chart.rates[key] = rate;
+    count++;
+  });
+
+  renderEditorTable();
+  renderChartList();
+  saveChartsToCloud();
+  calculate();
+
+  const resultEl = document.getElementById('csvResult');
+  if (resultEl) {
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `✅ ${count} rates import ஆனது!${errors > 0 ? `<br><span style="color:var(--red);">⚠️ ${errors} rows skip ஆனது (range தவறு)</span>` : ''}`;
+  }
+  showToast(`✅ ${count} rates import!`);
+}
+
+// ─── CALCULATOR ───────────────────────────────────────────────
+function calculate() {
+  const fatVal = parseFloat(document.getElementById('fatInp').value);
+  const snfVal = parseFloat(document.getElementById('snfInp').value);
+  const errEl = document.getElementById('errMsg');
+
+  errEl.classList.remove('show');
+
+  if (!selectedCalcId) {
+    setResult('—', 'Chart தேர்வு செய்யவும்', false);
+    return;
+  }
+
+  if (isNaN(fatVal) || isNaN(snfVal)) {
+    setResult('—', 'FAT & SNF உள்ளிடவும்', false);
+    return;
+  }
+
+  if (fatVal < 2.5 || fatVal > 12.0) {
+    errEl.textContent = '⚠️ FAT: 2.5 – 12.0 range-ல் இருக்க வேண்டும்';
+    errEl.classList.add('show');
+    setResult('—', '', false); return;
+  }
+
+  if (snfVal < 7.0 || snfVal > 10.0) {
+    errEl.textContent = '⚠️ SNF: 7.0 – 10.0 range-ல் இருக்க வேண்டும்';
+    errEl.classList.add('show');
+    setResult('—', '', false); return;
+  }
+
+  const chart = getChart(selectedCalcId);
+  if (!chart) {
+    setResult('—', 'Chart தேர்வு செய்யவும்', false);
+    return;
+  }
+
+  // Find closest fat & snf
+  const closestFat = FAT_VALS.reduce((a, b) => Math.abs(b - fatVal) < Math.abs(a - fatVal) ? b : a);
+  const closestSnf = SNF_VALS.reduce((a, b) => Math.abs(b - snfVal) < Math.abs(a - snfVal) ? b : a);
+  const key = `${closestFat.toFixed(1)}_${closestSnf.toFixed(1)}`;
+  const rate = chart.rates[key];
+
+  if (rate === undefined) {
+    setResult('—', `${chart.name} — FAT ${closestFat}, SNF ${closestSnf} க்கு rate இல்லை`, false);
+    document.getElementById('errMsg').textContent = `⚠️ Fat ${closestFat} + SNF ${closestSnf} க்கு rate set பண்ணவில்லை. Editor-ல் சேர்க்கவும்.`;
+    document.getElementById('errMsg').classList.add('show');
+    return;
+  }
+
+  document.getElementById('rFat').textContent = closestFat.toFixed(1);
+  document.getElementById('rSnf').textContent = closestSnf.toFixed(1);
+  document.getElementById('rChart').textContent = chart.name;
+
+  // TS = FAT + SNF
+  const ts = +(fatVal + snfVal).toFixed(2);
+  document.getElementById('rTs').textContent = ts.toFixed(2);
+
+  // TS Rate: proportional to FAT+SNF contribution
+  // TS rate = rate per kg of TS = (rate per litre) / (TS/100)
+  // i.e., how much per 1 kg of total solids
+  const tsRate = +(rate / (ts / 100)).toFixed(2);
+  document.getElementById('tsRateVal').textContent = '₹ ' + tsRate.toFixed(2);
+  document.getElementById('tsRateSub').textContent = `TS: ${ts.toFixed(2)}% | ₹${rate.toFixed(2)} ÷ (${ts.toFixed(2)}/100)`;
+  document.getElementById('tsRateBox').style.display = 'block';
+
+  document.getElementById('resultPills').style.display = 'flex';
+
+  setResult('₹ ' + rate.toFixed(2), `${chart.name}`, true);
+  calcTotal();
+
+  // Refresh editor table highlights
+  if (selectedEditorId) renderEditorTable();
+}
+
+function setResult(val, sub, show) {
+  document.getElementById('resultVal').textContent = val;
+  document.getElementById('resultSub').textContent = sub;
+  if (!show) {
+    document.getElementById('resultPills').style.display = 'none';
+    document.getElementById('totalAmt').textContent = '₹ —';
+    const tsBox = document.getElementById('tsRateBox');
+    if (tsBox) tsBox.style.display = 'none';
+  }
+}
+
+function calcTotal() {
+  const rateText = document.getElementById('resultVal').textContent;
+  const liters = parseFloat(document.getElementById('literInp').value);
+  if (!rateText.includes('₹') || rateText === '—' || isNaN(liters) || liters <= 0) {
+    document.getElementById('totalAmt').textContent = '₹ —';
+    return;
+  }
+  const rate = parseFloat(rateText.replace('₹', '').trim());
+  document.getElementById('totalAmt').textContent = '₹ ' + (rate * liters).toFixed(2);
+}
+
+// ─── TOAST ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── FIREBASE & ADMIN ─────────────────────────────────────────
+let db = null;
+let isAdmin = false;
+let adminPassword = '';
+let isLocalMode = false;
+let fbInitialized = false;
+
+function initFirebase() {
+  const url = document.getElementById('fbUrl').value.trim();
+  const pass = document.getElementById('fbAdminPass').value.trim();
+  if (!url || !pass) { showToast('URL மற்றும் Password உள்ளிடவும்!'); return; }
+  if (!url.startsWith('https://')) { showToast('⚠️ URL https:// தொடங்க வேண்டும்'); return; }
+
+  adminPassword = pass;
+  // Save config to localStorage
+  localStorage.setItem('fbUrl', url);
+  localStorage.setItem('fbPassHash', btoa(pass)); // simple encode
+
+  document.getElementById('fbStep1').style.display = 'none';
+  document.getElementById('fbConnecting').style.display = 'block';
+
+  try {
+    const app = firebase.initializeApp({ databaseURL: url }, 'milkapp');
+    db = firebase.database(app);
+    connectToFirebase();
+  } catch(e) {
+    showToast('❌ Firebase connect பண்ண முடியவில்லை');
+    document.getElementById('fbStep1').style.display = 'block';
+    document.getElementById('fbConnecting').style.display = 'none';
+  }
+}
+
+function connectToFirebase() {
+  db.ref('charts').on('value', snap => {
+    document.getElementById('fbModal').style.display = 'none';
+    document.getElementById('syncBar').style.display = 'block';
+    document.getElementById('syncStatus').textContent = '🟢 Live Sync';
+    document.getElementById('syncStatus').style.color = 'var(--green)';
+
+    const data = snap.val();
+    if (data) {
+      charts = Object.values(data).map(c => ({
+        id: c.id, name: c.name,
+        rates: c.rates || {}
+      }));
+      nextId = Math.max(...charts.map(c => c.id), 0) + 1;
+    } else {
+      charts = [];
+    }
+    renderAll();
+  }, err => {
+    document.getElementById('syncStatus').textContent = '🔴 Offline';
+    document.getElementById('syncStatus').style.color = 'var(--red)';
+  });
+
+  db.ref('.info/connected').on('value', snap => {
+    if (!snap.val()) {
+      document.getElementById('syncStatus').textContent = '🟡 Reconnecting...';
+      document.getElementById('syncStatus').style.color = 'var(--gold)';
+    }
+  });
+}
+
+function useLocalMode() {
+  isLocalMode = true;
+  document.getElementById('fbModal').style.display = 'none';
+  document.getElementById('syncBar').style.display = 'block';
+  document.getElementById('syncStatus').textContent = '📱 Local Mode';
+  document.getElementById('syncStatus').style.color = 'var(--text2)';
+  // Make editor accessible without admin in local mode
+  isAdmin = true;
+  charts = [
+    { id: nextId++, name: 'K Rate', rates: {} },
+    { id: nextId++, name: 'M Rate', rates: {} },
+  ];
+  renderAll();
+  showAdminUI();
+}
+
+// ─── ADMIN AUTH ───────────────────────────────────────────────
+function requireAdmin(page) {
+  if (isAdmin || isLocalMode) {
+    showPage2(page);
+  } else {
+    document.getElementById('adminModal').style.display = 'flex';
+    document.getElementById('adminPassInp').value = '';
+    document.getElementById('adminErr').style.display = 'none';
+    setTimeout(() => document.getElementById('adminPassInp').focus(), 100);
+  }
+}
+
+function verifyAdmin() {
+  const inp = document.getElementById('adminPassInp').value;
+  const stored = localStorage.getItem('fbPassHash');
+  const correct = stored ? atob(stored) : adminPassword;
+  if (inp === correct || inp === adminPassword) {
+    isAdmin = true;
+    closeAdminModal();
+    showAdminUI();
+    showPage2('editor');
+    showToast('👑 Admin mode!');
+  } else {
+    document.getElementById('adminErr').style.display = 'block';
+    document.getElementById('adminPassInp').value = '';
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('adminModal').style.display = 'none';
+}
+
+function showAdminUI() {
+  document.getElementById('adminBadge').style.display = 'inline';
+  document.getElementById('logoutBtn').style.display = 'inline';
+}
+
+function adminLogout() {
+  isAdmin = false;
+  document.getElementById('adminBadge').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+  showPage2('calc');
+  showToast('Logged out');
+}
+
+function showPage2(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  // highlight correct tab
+  const tabMap = { calc: 0, charts: 1, editor: 2 };
+  const tabs = document.querySelectorAll('.tab');
+  if (tabMap[p] !== undefined) tabs[tabMap[p]].classList.add('active');
+  if (p === 'editor') renderEditorChips();
+}
+
+// ─── CLOUD SAVE ───────────────────────────────────────────────
+function saveChartsToCloud() {
+  if (isLocalMode || !db) return;
+  const data = {};
+  charts.forEach(c => { data[c.id] = c; });
+  db.ref('charts').set(data);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+// Try to auto-connect from saved config
+(function autoInit() {
+  const savedUrl = localStorage.getItem('fbUrl');
+  const savedPass = localStorage.getItem('fbPassHash');
+  if (savedUrl && savedPass) {
+    adminPassword = atob(savedPass);
+    document.getElementById('fbUrl').value = savedUrl;
+    document.getElementById('fbAdminPass').value = adminPassword;
+    try {
+      const existing = firebase.apps.find(a => a.name === 'milkapp');
+      const app = existing || firebase.initializeApp({ databaseURL: savedUrl }, 'milkapp');
+      db = firebase.database(app);
+      document.getElementById('fbStep1').style.display = 'none';
+      document.getElementById('fbConnecting').style.display = 'block';
+      connectToFirebase();
+    } catch(e) { /* show modal */ }
+  }
+})();
+</script>
+</body>
+</html>
